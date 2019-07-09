@@ -1,3 +1,4 @@
+// const path = require("path");
 const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
@@ -22,53 +23,67 @@ const shortenedURL = function generateRandomString() {
 
 // NOTE: SERVER SETTINGS
 app.set("view engine", "ejs");
+// app.set("views", path.join(__dirname, "../views"));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // NOTE: GET REQUESTS
-app.get("/", (req, resp) => {
-  resp.send("Hello!");
+app.get("/", (request, response) => {
+  response.send("Hello!");
 });
 
-app.get("/urls.json", (req, resp) => {
-  resp.json(urlDatabase);
+app.get("/urls.json", (request, response) => {
+  response.json(urlDatabase);
 });
 
-app.get("/hello", (req, resp) => {
-  resp.send("<html><body>Hello <b>World</b></body></html>\n");
+app.get("/hello", (request, response) => {
+  response.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-app.get("/urls", (req, resp) => {
+app.get("/urls", (request, response) => {
   let templateVars = { urls: urlDatabase }
-  resp.render("urls_index", templateVars);
+  response.render("urls_index", templateVars);
 });
 
-app.get("/urls/new", (req, resp) => {
-  resp.render("urls_new");
+app.get("/urls/new", (request, response) => {
+  response.render("urls_new");
 });
 
-app.get("/urls/:shortURL", (req, resp) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
-  resp.render("urls_show", templateVars);
+app.get("/urls/:shortURL", (request, response) => {
+  let templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
+  response.render("urls_show", templateVars);
 });
 
-app.get("/u/:shortURL", (req, resp) => {
-  let destination = urlDatabase[req.params.shortURL];
-  resp.redirect(`${destination}`);
+app.get("/u/:shortURL", (request, response) => {
+  let destination = urlDatabase[request.params.shortURL];
+  response.redirect(`${destination}`);
 });
 
 // NOTE: POST REQUESTS
-app.post("/urls", (req, resp) => {
-  const shortened = shortenedURL();
-  if((req.body.longURL).substr(0, 7) !== 'http://') {
-    req.body.longURL = 'http://' + req.body.longURL;
+app.post("/urls", (request, response) => {
+  if ((request.body.longURL).substr(0, 7) !== 'http://') {
+    request.body.longURL = 'http://' + request.body.longURL;
+  } else if ((request.body.longURL).substr(0, 11) !== 'http://www.') {
+    request.body.longURL = 'http://www.' + request.body.longURL;
   }
-  urlDatabase[shortened] = req.body.longURL;
-  resp.redirect(`/urls/${shortened}`);
+  const shortened = shortenedURL();
+  urlDatabase[shortened] = request.body.longURL;
+  response.redirect(`/urls/${shortened}`);
 });
 
-app.post("/urls/:shortURL/delete", (req, resp) => {
-  delete urlDatabase[req.params.shortURL];
-  resp.redirect("/urls");
+// app.post("/u/:shortURL/edit", (request, response) => {
+//   const shortened = request.params.shortURL;
+//   urlDatabase[shortened] = request.body.editLongURL;
+//   response.redirect(`/urls/${shortened}`);
+// })
+
+app.post("/urls/:shortURL", (request, response) => {
+  const short = request.params.shortURL;
+  response.redirect(`/urls/${short}`);
+});
+
+app.post("/urls/:shortURL/delete", (request, response) => {
+  delete urlDatabase[request.params.shortURL];
+  response.redirect("/urls");
 });
 
 // NOTE: SERVER 'START'
