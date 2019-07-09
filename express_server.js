@@ -20,9 +20,11 @@ const shortenedURL = function generateRandomString() {
   return result;
 }
 
+// NOTE: SERVER SETTINGS
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// NOTE: GET REQUESTS
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -49,11 +51,22 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send("Ok");
-})
+app.get("/u/:shortURL", (req, res) => {
+  let destination = urlDatabase[req.params.shortURL];
+  res.redirect(`${destination}`);
+});
 
+// NOTE: POST REQUESTS
+app.post("/urls", (req, res) => {
+  const shortened = shortenedURL();
+  if((req.body.longURL).substr(0, 7) !== 'http://') {
+    req.body.longURL = 'http://' + req.body.longURL;
+  }
+  urlDatabase[shortened] = req.body.longURL;
+  res.redirect(`/urls/${shortened}`);
+});
+
+// NOTE: SERVER 'START'
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
 });
