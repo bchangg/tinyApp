@@ -1,17 +1,18 @@
 {
   "name": "tinyApp",
   "version": "1.0.0",
-  "description": "Upon completion, this project/app will allow the user to give it a URL, and it will return a shortened URL that redirects the user to the correct page.",
-  "main": "app.js",
+  "description": "Lighthouse Labs TinyApp Exercise",
+  "main": "express_server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "./node_modules/.bin/nodemon -L express_server.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bchangg/tinyApp.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Brian Chang changbhc@gmail.com",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/bchangg/tinyApp/issues"
@@ -21,5 +22,8 @@
     "body-parser": "^1.19.0",
     "ejs": "^2.6.2",
     "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.1"
   }
 }
