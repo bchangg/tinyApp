@@ -29,12 +29,12 @@
           <td><%= url %></td>
           <td><%= urls[url] %></td>
           <td>
-            <form class="form-inline" action="/urls/<%=url%>" method="POST">
+            <form class="form-inline" action="/urls/<%=url%>" method="GET">
               <button type="submit" class="btn btn-primary">Edit</button>
             </form>
           </td>
           <td>
-            <form method="POST" action="/urls/<%= url %>/delete">
+            <form action="/urls/<%= url %>/delete" method="POST">
               <button type="submit" class="btn btn-primary">Delete</button>
             </form>
           </td>

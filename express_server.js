@@ -70,15 +70,10 @@ app.post("/urls", (request, response) => {
   response.redirect(`/urls/${shortened}`);
 });
 
-// app.post("/u/:shortURL/edit", (request, response) => {
-//   const shortened = request.params.shortURL;
-//   urlDatabase[shortened] = request.body.editLongURL;
-//   response.redirect(`/urls/${shortened}`);
-// })
-
 app.post("/urls/:shortURL", (request, response) => {
   const short = request.params.shortURL;
-  response.redirect(`/urls/${short}`);
+  urlDatabase[short] = request.body.editLongURL;
+  response.redirect(`/urls`);
 });
 
 app.post("/urls/:shortURL/delete", (request, response) => {
