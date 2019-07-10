@@ -64,10 +64,14 @@ app.get("/urls/:shortURL", (request, response) => {
 });
 
 app.get("/u/:shortURL", (request, response) => {
+  response.redirect(`${urlDatabase[request.params.shortURL]}`);
+});
+
+app.get("/register", (request, response) => {
   let templateVars = {
     username: request.cookies["username"]
   };
-  response.redirect(`${urlDatabase[request.params.shortURL]}`, templateVars);
+  response.render("register_user", templateVars);
 });
 
 // NOTE: POST REQUESTS
@@ -79,12 +83,11 @@ app.post("/urls", (request, response) => {
   }
   const shortened = shortenedURL();
   urlDatabase[shortened] = request.body.longURL;
-  response.redirect(`/urls/${shortened}`, templateVars);
+  response.redirect(`/urls/${shortened}`);
 });
 
 app.post("/urls/:shortURL", (request, response) => {
-  const short = request.params.shortURL;
-  urlDatabase[short] = request.body.editLongURL;
+  urlDatabase[request.params.shortURL] = request.body.editLongURL;
   response.redirect(`/urls`);
 });
 
@@ -101,6 +104,11 @@ app.post("/login", (request, response) => {
 app.post("/logout", (request, response) => {
   response.clearCookie("username", request.body.username);
   response.redirect("/urls");
+});
+
+app.post("/register", (request, response) => {
+  users[request.body.username] = request.body.password;
+  response.end("Success");
 });
 
 // NOTE: SERVER 'START'
