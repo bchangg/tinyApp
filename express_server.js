@@ -1,16 +1,10 @@
-// const path = require("path");
+const { users } = require("./database/database");
+const { urlDatabase } = require("./database/database");
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
-
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
-
-const users = {};
 
 // Sampled from:
 // https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
@@ -26,7 +20,6 @@ const shortenedURL = function generateRandomString() {
 
 // NOTE: SERVER SETTINGS
 app.set("view engine", "ejs");
-// app.set("views", path.join(__dirname, "../views"));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -106,8 +99,9 @@ app.post("/logout", (request, response) => {
   response.redirect("/urls");
 });
 
+// COMBAK: FIX THIS POST FUNCTION SO THAT IT STORES STUFF INTO THE USERS "DATABASE" OBJECT
 app.post("/register", (request, response) => {
-  users[request.body.username] = request.body.password;
+  users[request.body.email] = {};
   response.end("Success");
 });
 
