@@ -19,7 +19,7 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cookieSession({
-  name: 'user_id',
+  name: "user_id",
   keys: ['secret1', 'secret2'],
 }));
 
@@ -35,22 +35,22 @@ app.get("/urls.json", (request, response) => {
 app.get("/urls", (request, response) => {
   let userURLs = {};
   for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === request.cookies["user_id"]) {
+    if (urlDatabase[shortURL].userID === request.session.user_id) {
       userURLs[shortURL] = urlDatabase[shortURL].longURL;
     }
   }
   let templateVars = {
     urls: userURLs,
-    user: users[request.cookies["user_id"]]
+    user: users[request.session.user_id]
   };
   response.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (request, response) => {
   let templateVars = {
-    user: users[request.cookies["user_id"]]
+    user: users[request.session.user_id]
   };
-  if (!users[request.cookies["user_id"]]) {
+  if (!users[request.session.user_id]) {
     response.render("login", templateVars);
   } else {
     response.render("urls_new", templateVars);
@@ -61,7 +61,7 @@ app.get("/urls/:shortURL", (request, response) => {
   let templateVars = {
     shortURL: request.params.shortURL,
     longURL: urlDatabase[request.params.shortURL].longURL,
-    user: users[request.cookies["user_id"]]
+    user: users[request.session.user_id]
   };
   response.render("urls_show", templateVars);
 });
@@ -73,7 +73,7 @@ app.get("/u/:shortURL", (request, response) => {
 
 app.get("/register", (request, response) => {
   let templateVars = {
-    user: users[request.cookies["user_id"]]
+    user: users[request.session.user_id]
   };
   response.render("register_user", templateVars);
 });
@@ -81,7 +81,7 @@ app.get("/register", (request, response) => {
 app.get("/login", (request, response) => {
   let templateVars = {
     urls: urlDatabase,
-    user: users[request.cookies["user_id"]]
+    user: users[request.session.user_id]
   };
   response.render("login", templateVars);
 });
@@ -89,15 +89,20 @@ app.get("/login", (request, response) => {
 // NOTE: POST REQUESTS
 app.post("/urls", (request, response) => {
   let longURL = request.body.longURL;
-  if ((longURL).substr(0, 11) !== 'http://www.') {
+  
+  // BUG: http://www.google.com turns into http://www.www.google.com
+  
+  if (longURL.substring(0, 6) !== 'http://' && longURL.substring(0, 4) !== 'www.') {
+    if(longURL.substring(0, 10) !== 'http://www.')
     longURL = 'http://www.' + longURL;
-  } else if ((longURL).substr(0, 7) !== 'http://') {
+  } else if (longURL.substring(0, 6) !== 'http://' && longURL.substring(0, 4) === 'www.') {
     longURL = 'http://' + longURL;
   }
+
   const shortened = randomString(6);
   urlDatabase[shortened] = {
     longURL: longURL,
-    userID: users[request.cookies["user_id"]].id
+    userID: users[request.session.user_id].id
   };
   response.redirect(`/urls/${shortened}`);
 });
@@ -114,27 +119,30 @@ app.post("/urls/:shortURL/delete", (request, response) => {
 
 app.post("/login", (request, response) => {
   const userEmail = request.body.email;
+  const userPassword = request.body.password;
   const currentUser = findUser(userEmail, users);
   if (!currentUser) {
     response.status(403).send("Email has not been registered");
   } else if (currentUser) {
-    if (bcrypt.compareSync(userEmail, users[currentUser].password)) {
-      response.cookie("user_id", currentUser);
-      response.redirect("/urls");
+    if (!bcrypt.compareSync(userPassword, users[currentUser].password)) {
+      response.status(403).send("Password does not match what is stored");
     }
-    response.status(403).send("Password does not match what is stored");
+    request.session.user_id = currentUser;
+    response.redirect("/urls");
   }
 });
 
 app.post("/logout", (request, response) => {
-  const currentUser = findUser(request.body.email, users);
-  response.clearCookie("user_id", currentUser);
+  const userEmail = request.body.email;
+  const currentUser = findUser(userEmail, users);
+  request.session = null;
   response.redirect("/urls");
 });
 
 app.post("/register", (request, response) => {
   const userEmail = request.body.email;
   const userPassword = request.body.password;
+
   if (!userEmail || !userPassword) {
     response.status(400).send("Email or password string is empty");
   } else if (findUser(userEmail, users)) {
@@ -144,9 +152,9 @@ app.post("/register", (request, response) => {
     users[userRegisterRandomString] = {
       id: userRegisterRandomString,
       email: request.body.email,
-      password: bcrypt.hashSync(request.body.password, 10)
+      password: bcrypt.hashSync(userPassword, 10)
     };
-    response.cookie("user_id", userRegisterRandomString);
+    request.session.user_id = userRegisterRandomString;
     response.redirect("/urls");
   }
 });
