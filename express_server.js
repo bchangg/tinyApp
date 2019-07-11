@@ -1,18 +1,27 @@
+// NOTE: CONST VARIABLES AND FUNCTIONS IMPORTED FROM ELSEWHERE
 const { users } = require("./database/database");
 const { urlDatabase } = require("./database/database");
 const { randomString } = require("./database/helperFunctions");
 const { findUser } = require("./database/helperFunctions");
+
+// NOTE: MIDDLEWARE
 const bcrypt = require("bcrypt");
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
-const app = express();
-const PORT = 8080;
+const cookieSession = require('cookie-session');
+
 
 // NOTE: SERVER SETTINGS
+const app = express();
+const PORT = 8080;
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(cookieSession({
+  name: 'user_id',
+  keys: ['secret1', 'secret2'],
+}));
 
 // NOTE: GET REQUESTS
 app.get("/", (request, response) => {
@@ -33,14 +42,14 @@ app.get("/urls", (request, response) => {
   let templateVars = {
     urls: userURLs,
     user: users[request.cookies["user_id"]]
-  }
+  };
   response.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (request, response) => {
   let templateVars = {
     user: users[request.cookies["user_id"]]
-  }
+  };
   if (!users[request.cookies["user_id"]]) {
     response.render("login", templateVars);
   } else {
@@ -73,9 +82,9 @@ app.get("/login", (request, response) => {
   let templateVars = {
     urls: urlDatabase,
     user: users[request.cookies["user_id"]]
-  }
+  };
   response.render("login", templateVars);
-})
+});
 
 // NOTE: POST REQUESTS
 app.post("/urls", (request, response) => {
@@ -89,7 +98,7 @@ app.post("/urls", (request, response) => {
   urlDatabase[shortened] = {
     longURL: longURL,
     userID: users[request.cookies["user_id"]].id
-  }
+  };
   response.redirect(`/urls/${shortened}`);
 });
 
@@ -127,7 +136,7 @@ app.post("/register", (request, response) => {
   const userEmail = request.body.email;
   const userPassword = request.body.password;
   if (!userEmail || !userPassword) {
-    response.status(400).render("Email or password string is empty");
+    response.status(400).send("Email or password string is empty");
   } else if (findUser(userEmail, users)) {
     response.status(400).send("Email has already been registered.");
   } else {
