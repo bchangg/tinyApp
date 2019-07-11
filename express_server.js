@@ -15,7 +15,7 @@ app.use(cookieParser());
 
 // NOTE: GET REQUESTS
 app.get("/", (request, response) => {
-  response.send("Hello!");
+  response.redirect("login");
 });
 
 app.get("/urls.json", (request, response) => {
@@ -23,8 +23,15 @@ app.get("/urls.json", (request, response) => {
 });
 
 app.get("/urls", (request, response) => {
+  console.log(users);
+  let userURLs = {};
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === request.cookies["user_id"]) {
+      userURLs[shortURL] = urlDatabase[shortURL].longURL;
+    }
+  }
   let templateVars = {
-    urls: urlDatabase,
+    urls: userURLs,
     user: users[request.cookies["user_id"]]
   }
   response.render("urls_index", templateVars);
@@ -34,13 +41,17 @@ app.get("/urls/new", (request, response) => {
   let templateVars = {
     user: users[request.cookies["user_id"]]
   }
-  response.render("urls_new", templateVars);
+  if (!users[request.cookies["user_id"]]) {
+    response.render("login", templateVars);
+  } else {
+    response.render("urls_new", templateVars);
+  }
 });
 
 app.get("/urls/:shortURL", (request, response) => {
   let templateVars = {
     shortURL: request.params.shortURL,
-    longURL: urlDatabase[request.params.shortURL],
+    longURL: urlDatabase[request.params.shortURL].longURL,
     user: users[request.cookies["user_id"]]
   };
   response.render("urls_show", templateVars);
@@ -73,12 +84,15 @@ app.post("/urls", (request, response) => {
     request.body.longURL = 'http://www.' + request.body.longURL;
   }
   const shortened = random6CharString();
-  urlDatabase[shortened] = request.body.longURL;
+  urlDatabase[shortened] = {
+    longURL: request.body.longURL,
+    userID: users[request.cookies["user_id"]].id
+  }
   response.redirect(`/urls/${shortened}`);
 });
 
 app.post("/urls/:shortURL", (request, response) => {
-  urlDatabase[request.params.shortURL] = request.body.editLongURL;
+  urlDatabase[request.params.shortURL].longURL = request.body.editLongURL;
   response.redirect(`/urls`);
 });
 
@@ -88,35 +102,34 @@ app.post("/urls/:shortURL/delete", (request, response) => {
 });
 
 app.post("/login", (request, response) => {
-  console.log("entered login");
   if (!emailExists(request.body.email, users)) {
-    response.status(403).render("error");
+    response.status(403).send("Email has not been registered");
   } else if (emailExists(request.body.email, users)) {
-    if (users[emailExists(request.body.email, users)].password !== request.body.password) {
-      response.status(403).render("error");
+    if (users[emailExists(request.body.email, users)].password === request.body.password) {
+      response.cookie("user_id", emailExists(request.body.email, users));
+      response.redirect("/urls");
     }
-    response.cookie("user_id", emailExists(request.body.email, users));
-    response.redirect("/urls");
-  } 
+    response.status(403).send("Password does not match what is stored");
+  }
 });
 
 app.post("/logout", (request, response) => {
-  console.log(users);
   response.clearCookie("user_id", emailExists(request.body.email, users));
   response.redirect("/urls");
 });
 
 app.post("/register", (request, response) => {
   if (request.body.email === "" || request.body.password === "") {
-    response.status(400).render("error");
+    response.status(400).render("Email or password string is empty");
   } else if (emailExists(request.body.email, users)) {
-    response.status(400).render("error");
+    response.status(400).send("Email is already in the database");
   } else {
     const userRegisterRandomString = random6CharString();
-    users[userRegisterRandomString] = {};
-    users[userRegisterRandomString].id = userRegisterRandomString;
-    users[userRegisterRandomString].email = request.body.email;
-    users[userRegisterRandomString].password = request.body.password;
+    users[userRegisterRandomString] = {
+      id: userRegisterRandomString,
+      email: request.body.email,
+      password: request.body.password
+    };
     response.cookie("user_id", userRegisterRandomString);
     response.redirect("/urls");
   }
