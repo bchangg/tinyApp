@@ -1,7 +1,8 @@
 const { users } = require("./database/database");
 const { urlDatabase } = require("./database/database");
-const { random6CharString } = require("./database/helperFunctions");
-const { emailExists } = require("./database/helperFunctions");
+const { randomString } = require("./database/helperFunctions");
+const { findUser } = require("./database/helperFunctions");
+const bcrypt = require("bcrypt");
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
@@ -23,7 +24,6 @@ app.get("/urls.json", (request, response) => {
 });
 
 app.get("/urls", (request, response) => {
-  console.log(users);
   let userURLs = {};
   for (const shortURL in urlDatabase) {
     if (urlDatabase[shortURL].userID === request.cookies["user_id"]) {
@@ -58,7 +58,8 @@ app.get("/urls/:shortURL", (request, response) => {
 });
 
 app.get("/u/:shortURL", (request, response) => {
-  response.redirect(`${urlDatabase[request.params.shortURL]}`);
+  console.log(urlDatabase);
+  response.redirect(`${urlDatabase[request.params.shortURL].longURL}`);
 });
 
 app.get("/register", (request, response) => {
@@ -78,14 +79,15 @@ app.get("/login", (request, response) => {
 
 // NOTE: POST REQUESTS
 app.post("/urls", (request, response) => {
-  if ((request.body.longURL).substr(0, 7) !== 'http://') {
-    request.body.longURL = 'http://' + request.body.longURL;
-  } else if ((request.body.longURL).substr(0, 11) !== 'http://www.') {
-    request.body.longURL = 'http://www.' + request.body.longURL;
+  let longURL = request.body.longURL;
+  if ((longURL).substr(0, 11) !== 'http://www.') {
+    longURL = 'http://www.' + longURL;
+  } else if ((longURL).substr(0, 7) !== 'http://') {
+    longURL = 'http://' + longURL;
   }
-  const shortened = random6CharString();
+  const shortened = randomString(6);
   urlDatabase[shortened] = {
-    longURL: request.body.longURL,
+    longURL: longURL,
     userID: users[request.cookies["user_id"]].id
   }
   response.redirect(`/urls/${shortened}`);
@@ -102,11 +104,13 @@ app.post("/urls/:shortURL/delete", (request, response) => {
 });
 
 app.post("/login", (request, response) => {
-  if (!emailExists(request.body.email, users)) {
+  const userEmail = request.body.email;
+  const currentUser = findUser(userEmail, users);
+  if (!currentUser) {
     response.status(403).send("Email has not been registered");
-  } else if (emailExists(request.body.email, users)) {
-    if (users[emailExists(request.body.email, users)].password === request.body.password) {
-      response.cookie("user_id", emailExists(request.body.email, users));
+  } else if (currentUser) {
+    if (bcrypt.compareSync(userEmail, users[currentUser].password)) {
+      response.cookie("user_id", currentUser);
       response.redirect("/urls");
     }
     response.status(403).send("Password does not match what is stored");
@@ -114,21 +118,24 @@ app.post("/login", (request, response) => {
 });
 
 app.post("/logout", (request, response) => {
-  response.clearCookie("user_id", emailExists(request.body.email, users));
+  const currentUser = findUser(request.body.email, users);
+  response.clearCookie("user_id", currentUser);
   response.redirect("/urls");
 });
 
 app.post("/register", (request, response) => {
-  if (request.body.email === "" || request.body.password === "") {
+  const userEmail = request.body.email;
+  const userPassword = request.body.password;
+  if (!userEmail || !userPassword) {
     response.status(400).render("Email or password string is empty");
-  } else if (emailExists(request.body.email, users)) {
-    response.status(400).send("Email is already in the database");
+  } else if (findUser(userEmail, users)) {
+    response.status(400).send("Email has already been registered.");
   } else {
-    const userRegisterRandomString = random6CharString();
+    const userRegisterRandomString = randomString(12);
     users[userRegisterRandomString] = {
       id: userRegisterRandomString,
       email: request.body.email,
-      password: request.body.password
+      password: bcrypt.hashSync(request.body.password, 10)
     };
     response.cookie("user_id", userRegisterRandomString);
     response.redirect("/urls");
