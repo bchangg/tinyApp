@@ -57,6 +57,14 @@ app.get("/register", (request, response) => {
   response.render("register_user", templateVars);
 });
 
+app.get("/login", (request, response) => {
+  let templateVars = {
+    urls: urlDatabase,
+    user: users[request.cookies["user_id"]]
+  }
+  response.render("login", templateVars);
+})
+
 // NOTE: POST REQUESTS
 app.post("/urls", (request, response) => {
   if ((request.body.longURL).substr(0, 7) !== 'http://') {
@@ -80,12 +88,21 @@ app.post("/urls/:shortURL/delete", (request, response) => {
 });
 
 app.post("/login", (request, response) => {
-  response.cookie("user_id", request.body.username);
-  response.redirect("/urls");
+  console.log("entered login");
+  if (!emailExists(request.body.email, users)) {
+    response.status(403).render("error");
+  } else if (emailExists(request.body.email, users)) {
+    if (users[emailExists(request.body.email, users)].password !== request.body.password) {
+      response.status(403).render("error");
+    }
+    response.cookie("user_id", emailExists(request.body.email, users));
+    response.redirect("/urls");
+  } 
 });
 
 app.post("/logout", (request, response) => {
-  response.clearCookie("user_id", request.body.username);
+  console.log(users);
+  response.clearCookie("user_id", emailExists(request.body.email, users));
   response.redirect("/urls");
 });
 

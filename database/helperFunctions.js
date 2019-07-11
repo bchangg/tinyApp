@@ -13,7 +13,7 @@ const random6CharString = function generateRandomString() {
 const emailExists= function findIfUserIsInDatabase(email, database) {
   for(let user in database) {
     if(database[user].email === email) {
-      return true;
+      return user;
     }
   }
   return false;

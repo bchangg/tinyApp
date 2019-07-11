@@ -12,13 +12,11 @@
       <% if (user) { %>
       <form class="form-inline ml-auto" action="/logout" method="POST">
         Logged In As:
-        <pre> </pre><%=user.email%>
+        <pre> </pre><%=user.email%><pre> </pre>
         <button class="btn btn-outline-primary" type="submit" name="button">Logout</button>
       </form>
       <% } else { %>
-      <form class="form-inline ml-auto" action="/login" method="POST">
-        <input class="form-control" type="text" name="username" placeholder="Username">
-        <pre> </pre>
+      <form class="form-inline ml-auto" action="/login" method="GET">
         <button class="btn btn-primary" type="submit" name="button">Login</button>
       </form>
       <pre> </pre>
