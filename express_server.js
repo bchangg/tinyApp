@@ -1,18 +1,14 @@
-// NOTE: CONST VARIABLES AND FUNCTIONS IMPORTED FROM ELSEWHERE
 const { users } = require("./database/database");
 const { urlDatabase } = require("./database/database");
 const { randomString } = require("./database/helperFunctions");
 const { findUser } = require("./database/helperFunctions");
 
-// NOTE: MIDDLEWARE
 const bcrypt = require("bcrypt");
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 
-
-// NOTE: SERVER SETTINGS
 const app = express();
 const PORT = 8080;
 app.set("view engine", "ejs");
@@ -53,16 +49,11 @@ app.get("/urls", (request, response) => {
     user: users[userCookie]
   };
 
-  // NOTE: Decision point - what to do if user not logged in? Send HTML directly?
-  // Or send them to the template page and have it render and tell them they
-  // are not logged in?
-  // Current functionality renders a template page that tells them they are not logged in
-
-  // if (!users[userCookie]) {
-  //   response.status(400).send("<h1>You are not logged in! Please log in first.</h1>");
-  // } else {
+  if (!users[userCookie]) {
+    response.status(400).send("<h1>You are not logged in! Please log in first.</h1>");
+  } else {
   response.render("urls_index", templateVars);
-  // }
+  }
 });
 
 app.get("/urls/new", (request, response) => {
@@ -89,10 +80,6 @@ app.get("/urls/:shortURL", (request, response) => {
     user: users[userCookie]
   };
 
-  // NOTE: 
-  // First check - Is user logged in?
-  // Second check - Does user own the domain?
-  // Otherwise show them the result.
   if (!users[userCookie]) {
     response.status(400).send("You are not logged in! Please log in first.");
   } else if (users[userCookie].id !== urlDatabase[currentShortURL].userID) {
