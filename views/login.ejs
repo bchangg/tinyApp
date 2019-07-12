@@ -2,15 +2,16 @@
 <html lang="en">
 
 <head>
-  <% include partials/_header %>
   <meta charset="utf-8">
-  <title></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
   <title>TinyApp</title>
 </head>
 
 <body>
+  <% include partials/_header %>
   <main>
     <div class="">
       <h1>Login</h1>
@@ -18,13 +19,13 @@
     <form action="/login" method="POST">
       <div class="form-group">
         <label for="email">Email Address</label>
-        <input class="form-control" placeholder="Enter email" type="email" name="email" style="width: 300px; margin: 0.5em">
+        <input class="form-control" placeholder="Enter email" type="email" name="email" style="width: 300px; margin: 0.5em" required>
       </div>
       <div class="form-group">
         <label for="password">Password</label>
-        <input class="form-control" placeholder="Password" type="password" name="password" style="width: 300px; margin: 0.5em">
+        <input class="form-control" placeholder="Password" type="password" name="password" style="width: 300px; margin: 0.5em" required>
       </div>
-      <button type="submit" name="button" class="btn btn-outline-primary" style="margin: 0.5em">Log In</button>
+      <button type="submit" name="button" style="margin: 0.5em" class="btn btn-outline-primary">Login</button>
     </form>
   </main>
 

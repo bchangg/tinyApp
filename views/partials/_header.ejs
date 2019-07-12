@@ -12,7 +12,8 @@
       <% if (user) { %>
       <form class="form-inline ml-auto" action="/logout" method="POST">
         Logged In As:
-        <pre> </pre><%=user.email%><pre> </pre>
+        <pre> </pre><%=user.email%>
+        <pre> </pre>
         <button class="btn btn-outline-primary" type="submit" name="button">Logout</button>
       </form>
       <% } else { %>

@@ -25,7 +25,15 @@ app.use(cookieSession({
 
 // NOTE: GET REQUESTS
 app.get("/", (request, response) => {
-  response.redirect("login");
+  const userCookie = request.session.user_id;
+  let templateVars = {
+    user: users[userCookie]
+  };
+  if (!users[userCookie]) {
+    response.redirect("/login");
+  } else {
+    response.redirect("/urls");
+  }
 });
 
 app.get("/urls.json", (request, response) => {
@@ -33,24 +41,26 @@ app.get("/urls.json", (request, response) => {
 });
 
 app.get("/urls", (request, response) => {
+  const userCookie = request.session.user_id;
   let userURLs = {};
   for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === request.session.user_id) {
+    if (urlDatabase[shortURL].userID === userCookie) {
       userURLs[shortURL] = urlDatabase[shortURL].longURL;
     }
   }
   let templateVars = {
     urls: userURLs,
-    user: users[request.session.user_id]
+    user: users[userCookie]
   };
   response.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (request, response) => {
+  const userCookie = request.session.user_id;
   let templateVars = {
-    user: users[request.session.user_id]
+    user: users[userCookie]
   };
-  if (!users[request.session.user_id]) {
+  if (!users[userCookie]) {
     response.render("login", templateVars);
   } else {
     response.render("urls_new", templateVars);
@@ -58,30 +68,44 @@ app.get("/urls/new", (request, response) => {
 });
 
 app.get("/urls/:shortURL", (request, response) => {
+  const currentShortURL = request.params.shortURL;
+  const userCookie = request.session.user_id;
+  if (!urlDatabase[currentShortURL]) {
+    response.status(400).send("This domain does not exist. Please use our platform to create it.")
+  }
   let templateVars = {
-    shortURL: request.params.shortURL,
-    longURL: urlDatabase[request.params.shortURL].longURL,
-    user: users[request.session.user_id]
+    shortURL: currentShortURL,
+    longURL: urlDatabase[currentShortURL].longURL,
+    user: users[userCookie]
   };
-  response.render("urls_show", templateVars);
+
+  if (!users[userCookie]) {
+    response.status(400).send("You do not own this short URL. Please log in first.")
+    // response.render("login", templateVars);
+  } else if (users[userCookie].id !== urlDatabase[currentShortURL].userID) {
+    response.status(400).send("You do not own this short URL. Please contact administrator.")
+  } else {
+    response.render("urls_show", templateVars);
+  }
 });
 
 app.get("/u/:shortURL", (request, response) => {
-  console.log(urlDatabase);
   response.redirect(`${urlDatabase[request.params.shortURL].longURL}`);
 });
 
 app.get("/register", (request, response) => {
+  const userCookie = request.session.user_id;
   let templateVars = {
-    user: users[request.session.user_id]
+    user: users[userCookie]
   };
   response.render("register_user", templateVars);
 });
 
 app.get("/login", (request, response) => {
+  const userCookie = request.session.user_id;
   let templateVars = {
     urls: urlDatabase,
-    user: users[request.session.user_id]
+    user: users[userCookie]
   };
   response.render("login", templateVars);
 });
@@ -89,20 +113,18 @@ app.get("/login", (request, response) => {
 // NOTE: POST REQUESTS
 app.post("/urls", (request, response) => {
   let longURL = request.body.longURL;
-  
-  // BUG: http://www.google.com turns into http://www.www.google.com
-  
-  if (longURL.substring(0, 6) !== 'http://' && longURL.substring(0, 4) !== 'www.') {
-    if(longURL.substring(0, 10) !== 'http://www.')
+
+  if (longURL.substring(0, 4) !== 'www.' && longURL.substring(0, 11) !== 'http://www.') {
     longURL = 'http://www.' + longURL;
-  } else if (longURL.substring(0, 6) !== 'http://' && longURL.substring(0, 4) === 'www.') {
+  } else if (longURL.substring(0, 7) !== 'http://') {
     longURL = 'http://' + longURL;
   }
 
   const shortened = randomString(6);
+  const userCookie = request.session.user_id;
   urlDatabase[shortened] = {
     longURL: longURL,
-    userID: users[request.session.user_id].id
+    userID: users[userCookie].id
   };
   response.redirect(`/urls/${shortened}`);
 });
@@ -118,6 +140,7 @@ app.post("/urls/:shortURL/delete", (request, response) => {
 });
 
 app.post("/login", (request, response) => {
+  const userCookie = request.session.user_id;
   const userEmail = request.body.email;
   const userPassword = request.body.password;
   const currentUser = findUser(userEmail, users);
@@ -133,8 +156,6 @@ app.post("/login", (request, response) => {
 });
 
 app.post("/logout", (request, response) => {
-  const userEmail = request.body.email;
-  const currentUser = findUser(userEmail, users);
   request.session = null;
   response.redirect("/urls");
 });
