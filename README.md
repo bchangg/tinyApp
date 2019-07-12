@@ -8,8 +8,10 @@ Once in the account, the user has the ability to EDIT and DELETE the links if th
 
 ## Final Product
 
-!["screenshot description"](#)
-!["screenshot description"](#)
+!["Login Page"](https://github.com/bchangg/tinyApp/blob/master/docs/login_page.png?raw=true)
+!["Create a new URL"](https://github.com/bchangg/tinyApp/blob/master/docs/create_URL_page.png?raw=true)
+!["List of created URLs"](https://github.com/bchangg/tinyApp/blob/master/docs/URL_list_page.png?raw=true)
+!["Edit a URL"](https://github.com/bchangg/tinyApp/blob/master/docs/URL_edit_page.png?raw=true)
 
 ## Dependencies
 
