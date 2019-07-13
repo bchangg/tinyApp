@@ -50,7 +50,7 @@ app.get("/urls", (request, response) => {
   };
 
   if (!users[userCookie]) {
-    response.status(400).send("<h1>You are not logged in! Please log in first.</h1>");
+    response.render("login", templateVars);
   } else {
   response.render("urls_index", templateVars);
   }
@@ -174,17 +174,17 @@ app.post("/urls/:shortURL/delete", (request, response) => {
 });
 
 app.post("/login", (request, response) => {
-  const userCookie = request.session.user_id;
   const userEmail = request.body.email;
   const userPassword = request.body.password;
-  const currentUser = findUser(userEmail, users);
-  if (!currentUser) {
+  const currentUserId = findUser(userEmail, users);
+  if (!currentUserId) {
     response.status(403).send("Email has not been registered");
-  } else if (currentUser) {
-    if (!bcrypt.compareSync(userPassword, users[currentUser].password)) {
+  } else if (currentUserId) {
+    if (!bcrypt.compareSync(userPassword, users[currentUserId].password)) {
       response.status(403).send("Password is incorrect.");
     }
-    request.session.user_id = currentUser;
+    // Generate cookie for this user
+    request.session.user_id = currentUserId;
     response.redirect("/urls");
   }
 });
